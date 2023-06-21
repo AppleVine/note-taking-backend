@@ -1,10 +1,32 @@
 const { response } = require('express')
 const Note = require('../models/notes')
+const User = require('../models/user')
 
-const getNotes = async (request, response) =>{
+const getNotes = async (request, response) =>{ // For example, if you look at /notes?isCompleted=true it'll return {isCompleted: "true"}
 
-    let notes = await Note.find()
-    response.send(notes)
+    let notes
+
+    if (Object.keys(request.query).length > 0) {
+        if (request.query.isCompleted ==='true') {
+            notes = await Note.find({isCompleted: true})
+        } else if (request.query.isCompleted ==='false') {
+            notes = await Note.find({isCompleted: false})
+        } else {
+            notes = await Note.find()
+        }
+        response.send(notes)
+    } else {
+        let notes = await Note.find()
+        response.send(notes)
+    }
+}
+
+const getMyNotes = async(request, response) => {
+    // find user by username. Once we have auth, we get this through the token instead. 
+    let user = User.findOne({username: request.body.username}).populate('notes')
+    response.send(user.notes)
+    // response.send(user.notes)
+    
 }
 
 const getNote = async (request, response) => {
@@ -20,6 +42,8 @@ const getNote = async (request, response) => {
 }
 
 const createNote = async (request, response) => {
+    let user = await User.findOne({username: request.body.username})
+
     let newNote = new Note({
         title: request.body.title,
         description: request.body.description,
@@ -28,8 +52,13 @@ const createNote = async (request, response) => {
         createdAtDate: Date.now()
     })
     await newNote.save()
+    user.notes.push(newNote._id)
+    await user.save()
     response.status(201)
-    response.json({note: newNote})
+    response.json({
+        note: newNote,
+        user: user
+    })
 }
 
 const updateNote = async (request, response) => {
@@ -68,4 +97,4 @@ const deleteNote = async (request, response) => {
     })
 }
 
-module.exports = {getNotes, createNote, deleteAllNotes, getNote, deleteNote, updateNote}
+module.exports = {getNotes, createNote, deleteAllNotes, getNote, deleteNote, updateNote, getMyNotes}
