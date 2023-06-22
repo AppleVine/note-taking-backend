@@ -23,7 +23,7 @@ const getNotes = async (request, response) =>{ // For example, if you look at /n
 
 const getMyNotes = async(request, response) => {
     // find user by username. Once we have auth, we get this through the token instead. 
-    let user = User.findOne({username: request.body.username}).populate('notes')
+    let user = await User.findOne({username: request.body.username}).populate('notes')
     response.send(user.notes)
     // response.send(user.notes)
     
@@ -84,17 +84,22 @@ const deleteAllNotes = async (request, response) => {
 }
 
 const deleteNote = async (request, response) => {
-    await Note.findByIdAndDelete(request.params.id)
+    let user = await User.findOne({username: request.body.username})
+
+    note = await Note.findByIdAndDelete(request.params.id)
                 .catch(error => {
                 console.log("Error: \n" + error)
-                response.status(404)
-                response.json({
-                    error: "id not found in the database"
-        })
-    })
-    response.json({
-        "message": "Note Deleted."
-    })
+            })
+
+    if (note) {
+        // remove the note_id from the user's note array.
+        user.notes.shift(note._id);
+        response.json({"message": "Note Deleted."})
+    } else {
+        response.json({error: "id not found"})
+    }
+
+    
 }
 
 module.exports = {getNotes, createNote, deleteAllNotes, getNote, deleteNote, updateNote, getMyNotes}
