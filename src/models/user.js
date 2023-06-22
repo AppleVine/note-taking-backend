@@ -27,7 +27,7 @@ user {
 
 const mongoose = require('mongoose')
 
-const User = mongoose.model('User', {
+const UserSchema = mongoose.Schema({
     username: {
         type: String,
         unique: true,
@@ -35,5 +35,7 @@ const User = mongoose.model('User', {
     },
     notes: [{type: mongoose.Types.ObjectId, ref: 'Note'}]
 })
+
+const User = mongoose.model('User', UserSchema)
 
 module.exports = User 

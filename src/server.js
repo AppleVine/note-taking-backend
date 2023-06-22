@@ -29,18 +29,53 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 
-
-
-async function dbConnect(){
-	try{
-		await mongoose.connect('mongodb://localhost:27017/note_taking_db')
-		console.log("Database connected!")
-	} catch (error) {
-		console.log(`dbConnect failed, error: ${JSON.stringify(error)}`)
-	}
+let databaseURL = "";
+switch(process.env.NODE_ENV.toLowerCase()){
+	case "production":
+		databaseURL = process.env.DATABASE_URL;
+		break;
+	case "development":
+		databaseURL = 'mongodb://localhost:27017/note_taking_db'
+		break;
+	case "test":
+		databaseURL = 'mongodb://localhost:27017/note_taking_db_test';
+		break;
+	default: 
+		console.log("Wrong environment mode, database cannot connect.")
 }
 
-dbConnect()
+const {databaseConnector} = require("./database")
+databaseConnector(databaseURL).then(() => {
+	console.log("connected to the database!")
+}).catch(error => {
+	console.log("Could not connect to the database.")
+	console.log(error)
+})
+
+// async function dbConnect(){
+// 	try{
+// 		await mongoose.connect('mongodb://localhost:27017/note_taking_db')
+// 		console.log("Database connected!")
+// 	} catch (error) {
+// 		console.log(`dbConnect failed, error: ${JSON.stringify(error)}`)
+// 	}
+// }
+
+// dbConnect()
+
+app.get("/databaseHealth", (request, response) => {
+	let databaseState = mongoose.connection.readyState;
+	let databaseName = mongoose.connection.name;
+	let databaseModels = mongoose.connection.modelNames();
+	let databaseHost = mongoose.connection.host;
+
+	response.json({
+		readyState: databaseState,
+		dbName: databaseName,
+		dbModels: databaseModels,
+		dbHost: databaseHost
+	})
+})
 
 app.get("/", (request, response) => {
 	response.json({
