@@ -21,7 +21,7 @@ app.use(helmet.contentSecurityPolicy({
 
 const cors = require('cors')
 let corsOptions = {
-	origin: ["http://localhost:3000", "https://master--lovely-smakager-b1a123.netlify.app/"],
+	origin: ["http://localhost:3000", "https://master--lovely-smakager-b1a123.netlify.app"],
 	optionSuccessStatus: 200
 }
 app.use(cors(corsOptions));
